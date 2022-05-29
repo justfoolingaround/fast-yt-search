@@ -1,4 +1,4 @@
-<p align="center"><img src="https://capsule-render.vercel.app/api?type=soft&fontColor=d60a79&text=fast-youtube-search&height=150&fontSize=60&desc=The most powerful and fastest YouTube searching Python library.&descAlignY=75&descAlign=60&color=00000000&animation=twinkling"></p>
+<p align="center"><img src="https://capsule-render.vercel.app/api?type=soft&fontColor=d60a79&text=fast-yt-search&height=150&fontSize=60&desc=The most powerful and fastest YouTube searching Python library.&descAlignY=75&descAlign=60&color=00000000&animation=twinkling"></p>
 
 ## Overview
 
@@ -17,13 +17,13 @@ This project can be installed on to your device via different mechanisms, these 
 
 <li id="pip-installation"> PIP Installs Packages <strong>aka</strong> PIP Installation 
 
-    $ pip install git+https://www.github.com/justfoolingaround/fast-youtube-search
+    $ pip install git+https://www.github.com/justfoolingaround/fast-yt-search
 </li>
 <li id="source-code-download"> Source Code Download
 
-    $ git clone https://www.github.com/justfoolingaround/fast-youtube-search
+    $ git clone https://www.github.com/justfoolingaround/fast-yt-search
 
-Given that you have [`git`](https://git-scm.com/) installed, you can clone the repository from GitHub. If you do not have or want to deal with installation of [`git`](https://git-scm.com/), you can simply download the repository using [this link.](https://github.com/justfoolingaround/fast-youtube-search/archive/refs/heads/master.zip)
+Given that you have [`git`](https://git-scm.com/) installed, you can clone the repository from GitHub. If you do not have or want to deal with installation of [`git`](https://git-scm.com/), you can simply download the repository using [this link.](https://github.com/justfoolingaround/fast-yt-search/archive/refs/heads/master.zip)
 
 After the repository is downloaded and placed in an appropriate directory, you can use [`setup.py`](./setup.py) to proceed with the installation.
 
