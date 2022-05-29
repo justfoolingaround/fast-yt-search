@@ -1,0 +1,107 @@
+import json
+import re
+
+from . import filters
+from .constants import PUBLIC_YOUTUBE_API_KEY, YOUTUBE_SEARCH_API, YOUTUBE_SEARCH_URL
+from .parser import iter_from_item_section_renderer
+
+youtube_initial_data_regex = re.compile(r"ytInitialData = ({.*?});")
+
+
+def sanitise_api_response(data: dict):
+
+    if "contents" in data:
+        item_selection_renderer, continuation_tracker = data["contents"][
+            "twoColumnSearchResultsRenderer"
+        ]["primaryContents"]["sectionListRenderer"]["contents"]
+    else:
+        item_selection_renderer, continuation_tracker = data[
+            "onResponseReceivedCommands"
+        ][0]["appendContinuationItemsAction"]["continuationItems"]
+
+    return (
+        int(data["estimatedResults"]),
+        item_selection_renderer["itemSectionRenderer"],
+        continuation_tracker["continuationItemRenderer"]["continuationEndpoint"][
+            "continuationCommand"
+        ]["token"],
+    )
+
+
+context = {
+    "hl": "en",
+    "client": {
+        "clientName": "WEB",
+        "clientVersion": "2.20200304.02.01",
+    },
+}
+
+
+def search(
+    session,
+    query,
+    *,
+    sort_by=filters.SortBy.RELEVANCE,
+    feature=None,
+    duration=None,
+    content_type=None,
+    upload_time=None,
+    keep_searching=False,
+    custom_api_context=context,
+):
+
+    filter_key = filters.get_filter_key(
+        sort_by=sort_by,
+        feature=feature,
+        duration=duration,
+        content_type=content_type,
+        upload_time=upload_time,
+    )
+
+    youtube_response = json.loads(
+        youtube_initial_data_regex.search(
+            session.get(
+                YOUTUBE_SEARCH_URL,
+                params={
+                    "hl": "en",
+                    "search_query": query,
+                    "sp": filter_key,
+                },
+            ).text
+        ).group(1)
+    )
+
+    (
+        estimated_results,
+        item_selection_renderer,
+        continuation_token,
+    ) = sanitise_api_response(youtube_response)
+
+    for component in iter_from_item_section_renderer(item_selection_renderer):
+        yield estimated_results, component
+
+    if not keep_searching:
+        return
+
+    component = {}
+
+    while component is not None:
+
+        component = None
+
+        response = session.post(
+            YOUTUBE_SEARCH_API,
+            params={
+                "key": PUBLIC_YOUTUBE_API_KEY,
+            },
+            json={"context": custom_api_context, "continuation": continuation_token},
+        ).json()
+
+        (
+            estimated_results,
+            item_selection_renderer,
+            continuation_token,
+        ) = sanitise_api_response(response)
+
+        for component in iter_from_item_section_renderer(item_selection_renderer):
+            yield estimated_results, component
