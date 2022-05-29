@@ -37,7 +37,7 @@ def from_video_renderer(data: dict):
     if not is_live:
         component["duration"] = get_text(data["lengthText"])
 
-    channel_info_raw = data["ownerText"]["runs"]
+    channel_info_raw = data["ownerText"]
 
     channel_info = {
         "id": get_text(

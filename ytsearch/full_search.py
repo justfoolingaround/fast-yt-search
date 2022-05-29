@@ -1,11 +1,6 @@
-import json
-import re
-
 from . import filters
 from .constants import PUBLIC_YOUTUBE_API_KEY, YOUTUBE_SEARCH_API, YOUTUBE_SEARCH_URL
 from .parser import iter_from_item_section_renderer
-
-youtube_initial_data_regex = re.compile(r"ytInitialData = ({.*?});")
 
 
 def sanitise_api_response(data: dict):
@@ -28,11 +23,14 @@ def sanitise_api_response(data: dict):
     )
 
 
+youtube_client_version = "2.20200304.02.01"
+youtube_client_name = "1"
+
 context = {
     "hl": "en",
     "client": {
-        "clientName": "WEB",
-        "clientVersion": "2.20200304.02.01",
+        "clientName": youtube_client_name,
+        "clientVersion": youtube_client_version,
     },
 }
 
@@ -58,19 +56,19 @@ def search(
         upload_time=upload_time,
     )
 
-    youtube_response = json.loads(
-        youtube_initial_data_regex.search(
-            session.get(
-                YOUTUBE_SEARCH_URL,
-                params={
-                    "hl": "en",
-                    "search_query": query,
-                    "sp": filter_key,
-                },
-            ).text
-        ).group(1)
-    )
-
+    youtube_response = session.get(
+        YOUTUBE_SEARCH_URL,
+        params={
+            "hl": "en",
+            "search_query": query,
+            "sp": filter_key,
+            "pbj": "1",
+        },
+        headers={
+            "x-youtube-client-name": youtube_client_name,
+            "x-youtube-client-version": youtube_client_version,
+        },
+    ).json()[1]["response"]
     (
         estimated_results,
         item_selection_renderer,
