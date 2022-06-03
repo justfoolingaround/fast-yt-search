@@ -55,6 +55,8 @@ def get_filter_key(
     duration: "Duration | None" = None,
     content_type: "ContentType | None" = None,
     upload_time: "UploadTime | None" = None,
+    *,
+    autocorrect: bool = False
 ):
 
     initial = b""
@@ -72,5 +74,9 @@ def get_filter_key(
         initial += feature.value + b"\x01"
 
     return base64.b64encode(
-        sort_by.value + b"\x12" + bytes([len(initial)]) + initial
+        sort_by.value
+        + b"\x12"
+        + bytes([len(initial)])
+        + initial
+        + (b"\x42\x02\x08\x01" if not autocorrect else b"")
     ).decode()

@@ -44,6 +44,7 @@ def search(
     duration=None,
     content_type=None,
     upload_time=None,
+    autocorrect=False,
     keep_searching=False,
     custom_api_context=context,
 ):
@@ -54,6 +55,7 @@ def search(
         duration=duration,
         content_type=content_type,
         upload_time=upload_time,
+        autocorrect=autocorrect,
     )
 
     youtube_response = session.get(
