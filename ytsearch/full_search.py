@@ -6,20 +6,27 @@ from .parser import iter_from_item_section_renderer
 def sanitise_api_response(data: dict):
 
     if "contents" in data:
-        item_selection_renderer, continuation_tracker = data["contents"][
-            "twoColumnSearchResultsRenderer"
-        ]["primaryContents"]["sectionListRenderer"]["contents"]
+        medias = data["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"][
+            "sectionListRenderer"
+        ]["contents"]
     else:
-        item_selection_renderer, continuation_tracker = data[
-            "onResponseReceivedCommands"
-        ][0]["appendContinuationItemsAction"]["continuationItems"]
+        medias = data["onResponseReceivedCommands"][0]["appendContinuationItemsAction"][
+            "continuationItems"
+        ]
+
+    if len(medias) > 1:
+        item_selection_renderer, continuation_tracker = medias
+    else:
+        item_selection_renderer, continuation_tracker = medias[0], None
 
     return (
         int(data["estimatedResults"]),
         item_selection_renderer["itemSectionRenderer"],
         continuation_tracker["continuationItemRenderer"]["continuationEndpoint"][
             "continuationCommand"
-        ]["token"],
+        ]["token"]
+        if continuation_tracker is not None
+        else None,
     )
 
 
@@ -85,7 +92,7 @@ def search(
 
     component = {}
 
-    while component is not None:
+    while component is not None and continuation_token is not None:
 
         component = None
 
