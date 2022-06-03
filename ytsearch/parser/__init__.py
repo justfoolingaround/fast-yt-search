@@ -1,18 +1,48 @@
 from .channel import from_channel_renderer
+from .horizontalcard import from_horizontalcard_renderer
 from .playlist import from_playlist_renderer
 from .show import from_show_renderer
+from .utils import get_text
 from .video import from_video_renderer
 
-from .utils import get_text
 
+def iter_from_item_section_renderer(
+    data: dict, *, attrs=None, accessor=lambda data: data["contents"]
+):
 
-def iter_from_item_section_renderer(data: dict):
-
-    attrs = {}
+    if attrs is None:
+        attrs = {}
 
     def genexp(attrs=attrs):
 
-        for renderer_shelf in data["contents"]:
+        for renderer_shelf in accessor(data):
+
+            if "radioRenderer" in renderer_shelf:
+                yield {
+                    "type": "radio",
+                    "content": from_playlist_renderer(renderer_shelf["radioRenderer"]),
+                }
+
+            if "horizontalCardListRenderer" in renderer_shelf:
+                yield {
+                    "type": "similar_channels",
+                    "content": from_horizontalcard_renderer(
+                        renderer_shelf["horizontalCardListRenderer"]
+                    ),
+                }
+
+            if "shelfRenderer" in renderer_shelf:
+
+                shadow_attrs = {
+                    "media_group": get_text(renderer_shelf["shelfRenderer"]["title"]),
+                }
+
+                shadow_attrs.update(attrs)
+                yield from iter_from_item_section_renderer(
+                    renderer_shelf["shelfRenderer"]["content"]["verticalListRenderer"],
+                    attrs=shadow_attrs,
+                    accessor=lambda data: data["items"],
+                )
 
             if "showingResultsForRenderer" in renderer_shelf:
                 attrs.update(
@@ -63,9 +93,5 @@ def iter_from_item_section_renderer(data: dict):
                 }
 
     for component in genexp():
-        component.update(
-            {
-                "attrs": attrs,
-            }
-        )
+        component.setdefault("attrs", {}).update(attrs)
         yield component
