@@ -1,4 +1,4 @@
-from .utils import get_text, bump_channel_thumbnail
+from .utils import bump_channel_thumbnail, get_text
 
 
 def from_channel_renderer(data: dict):

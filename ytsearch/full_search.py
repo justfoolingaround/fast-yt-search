@@ -65,14 +65,18 @@ def search(
         autocorrect=autocorrect,
     )
 
+    params = {
+        "hl": "en",
+        "search_query": query,
+        "pbj": "1",
+    }
+
+    if filter_key:
+        params["sp"] = filter_key
+
     youtube_response = session.get(
         YOUTUBE_SEARCH_URL,
-        params={
-            "hl": "en",
-            "search_query": query,
-            "sp": filter_key,
-            "pbj": "1",
-        },
+        params=params,
         headers={
             "x-youtube-client-name": youtube_client_name,
             "x-youtube-client-version": youtube_client_version,

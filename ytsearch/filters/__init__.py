@@ -1,6 +1,8 @@
 import base64
 import enum
 
+NO_AUTOCORRECT_KEY = b"\x42\x02\x08\x01"
+
 
 class SortBy(enum.Enum):
 
@@ -18,10 +20,10 @@ class Feature(enum.Enum):
     SUBTITLES = b"\x28"
     CREATIVE_COMMONS = b"\x30"
     Q_360 = b"\x78"
-    Q_VR180 = b"\xd0\x01"
-    Q_3D = b"\x38\x01"
-    Q_HDR = b"\xc8\x01"
-    LOCATION = b"\xb8\x01"
+    Q_VR180 = b"\xd0"
+    Q_3D = b"\x38"
+    Q_HDR = b"\xc8"
+    LOCATION = b"\xb8"
     PURCHASED = b"\x48"
 
 
@@ -73,10 +75,12 @@ def get_filter_key(
     if feature is not None:
         initial += feature.value + b"\x01"
 
-    return base64.b64encode(
-        sort_by.value
-        + b"\x12"
-        + bytes([len(initial)])
-        + initial
-        + (b"\x42\x02\x08\x01" if not autocorrect else b"")
-    ).decode()
+    retval = sort_by.value
+
+    if initial:
+        retval += b"\x12" + bytes((len(initial),)) + initial
+
+    if not autocorrect:
+        retval += NO_AUTOCORRECT_KEY
+
+    return base64.b64encode(retval).decode()

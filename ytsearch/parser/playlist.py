@@ -1,4 +1,4 @@
-from .utils import get_maxres_video_thumbnail, get_text, bump_channel_thumbnail
+from .utils import bump_channel_thumbnail, get_maxres_video_thumbnail, get_text
 
 
 def from_playlist_renderer(data: dict):
