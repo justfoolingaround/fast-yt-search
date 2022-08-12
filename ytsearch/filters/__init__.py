@@ -53,7 +53,7 @@ class UploadTime(enum.Enum):
 
 def get_filter_key(
     sort_by: SortBy = SortBy.RELEVANCE,
-    feature: "Feature | None" = None,
+    features: "tuple[Feature]" = (),
     duration: "Duration | None" = None,
     content_type: "ContentType | None" = None,
     upload_time: "UploadTime | None" = None,
@@ -72,8 +72,8 @@ def get_filter_key(
     if duration is not None:
         initial += b"\x18" + duration.value
 
-    if feature is not None:
-        initial += feature.value + b"\x01"
+    for features in features:
+        initial += features.value + b"\x01"
 
     retval = sort_by.value
 

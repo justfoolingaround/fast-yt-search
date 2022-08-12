@@ -47,7 +47,7 @@ def search(
     query,
     *,
     sort_by=filters.SortBy.RELEVANCE,
-    feature=None,
+    features=(),
     duration=None,
     content_type=None,
     upload_time=None,
@@ -58,7 +58,7 @@ def search(
 
     filter_key = filters.get_filter_key(
         sort_by=sort_by,
-        feature=feature,
+        features=features,
         duration=duration,
         content_type=content_type,
         upload_time=upload_time,
