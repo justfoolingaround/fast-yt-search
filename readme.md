@@ -1,4 +1,4 @@
-<p align="center"><img src="https://capsule-render.vercel.app/api?type=soft&fontColor=d60a79&text=fast-yt-search&height=150&fontSize=60&desc=The most powerful and fastest YouTube searching Python library.&descAlignY=75&descAlign=60&color=00000000&animation=twinkling"></p>
+<p align="center"><img src="https://capsule-render.vercel.app/api?type=soft&fontColor=d60a79&text=fast-yt-search&height=150&fontSize=60&desc=The%20most%20powerful%20and%20fastest%20YouTube%20searching%20Python%20library.&descAlignY=75&descAlign=60&color=00000000&animation=twinkling"></p>
 
 ## Overview
 
