@@ -1,4 +1,12 @@
-from .utils import bump_channel_thumbnail, get_text
+from dataclasses import dataclass
+
+from .utils import bump_image, get_text
+
+
+@dataclass
+class HorizontalCard:
+    query: str
+    thumbnail: str = None
 
 
 def from_horizontalcard_renderer(data: dict):
@@ -19,7 +27,7 @@ def from_horizontalcard_renderer(data: dict):
                 if selected[-13:] == "mqdefault.jpg":
                     component.update(thumbnail=selected)
                 else:
-                    component.update(thumbnail=bump_channel_thumbnail(thumbnails[-1]))
+                    component.update(thumbnail=bump_image(thumbnails[-1]))
 
             component.update(
                 query=get_text(renderer["query"]),
@@ -27,4 +35,4 @@ def from_horizontalcard_renderer(data: dict):
 
             yield component
 
-    return list(genexp())
+    return list(HorizontalCard(**_) for _ in genexp())

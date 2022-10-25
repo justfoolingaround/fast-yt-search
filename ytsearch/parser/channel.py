@@ -1,4 +1,17 @@
-from .utils import bump_channel_thumbnail, get_text
+from dataclasses import dataclass
+
+from .utils import bump_image, get_text
+
+
+@dataclass
+class Channel:
+    id: str
+    name: str
+    video_count: str = None
+    subscriber_count: str = None
+    description: str = None
+    badges: list = None
+    thumbnail: str = None
 
 
 def from_channel_renderer(data: dict):
@@ -25,6 +38,6 @@ def from_channel_renderer(data: dict):
     thumbnails = [_["url"] for _ in data["thumbnail"]["thumbnails"]]
 
     if thumbnails:
-        component.update(thumbnail=bump_channel_thumbnail(thumbnails[0]))
+        component.update(thumbnail=bump_image(thumbnails[0]))
 
-    return component
+    return Channel(**component)

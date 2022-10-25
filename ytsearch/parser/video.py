@@ -1,4 +1,23 @@
-from .utils import bump_channel_thumbnail, get_maxres_video_thumbnail, get_text
+from dataclasses import dataclass
+
+from .channel import Channel
+from .utils import bump_image, get_maxres_video_thumbnail, get_text
+
+
+@dataclass
+class Video:
+    id: str
+    title: str
+    thumbnail: str
+    channel: Channel = None
+
+    views: str = None
+    duration: str = None
+    is_live: bool = False
+    short_description: str = None
+    rich_thumbnail: list = None
+    badges: list = None
+    relative_upload_time: str = None
 
 
 def from_video_renderer(data: dict):
@@ -7,8 +26,10 @@ def from_video_renderer(data: dict):
         "id": data["videoId"],
         "thumbnail": get_maxres_video_thumbnail(data["videoId"]),
         "title": get_text(data["title"]),
-        "views": get_text(data["viewCountText"], runs_joiner=" "),
     }
+
+    if "viewCountText" in data:
+        component["views"] = get_text(data["viewCountText"], runs_joiner=" ")
 
     if "richThumbnail" in data:
         component["rich_thumbnail"] = [
@@ -37,33 +58,34 @@ def from_video_renderer(data: dict):
     if not is_live:
         component["duration"] = get_text(data["lengthText"])
 
-    channel_info_raw = data["ownerText"]
+    if "ownerText" in data:
+        channel_info_raw = data["ownerText"]
 
-    channel_info = {
-        "id": get_text(
-            channel_info_raw,
-            run_accessor=lambda run: run["navigationEndpoint"]["browseEndpoint"][
-                "browseId"
-            ],
-        ),
-        "name": get_text(channel_info_raw, run_accessor=lambda run: run["text"]),
-    }
+        channel_info = {
+            "id": get_text(
+                channel_info_raw,
+                run_accessor=lambda run: run["navigationEndpoint"]["browseEndpoint"][
+                    "browseId"
+                ],
+            ),
+            "name": get_text(channel_info_raw, run_accessor=lambda run: run["text"]),
+        }
 
-    if "ownerBadges" in data:
-        channel_info["badges"] = [
-            _["metadataBadgeRenderer"]["style"] for _ in data["ownerBadges"]
+        if "ownerBadges" in data:
+            channel_info["badges"] = [
+                _["metadataBadgeRenderer"]["style"] for _ in data["ownerBadges"]
+            ]
+
+        thumbnails = [
+            _["url"]
+            for _ in data["channelThumbnailSupportedRenderers"][
+                "channelThumbnailWithLinkRenderer"
+            ]["thumbnail"]["thumbnails"]
         ]
 
-    thumbnails = [
-        _["url"]
-        for _ in data["channelThumbnailSupportedRenderers"][
-            "channelThumbnailWithLinkRenderer"
-        ]["thumbnail"]["thumbnails"]
-    ]
+        if thumbnails:
+            channel_info.update(thumbnail=bump_image(thumbnails[0]))
 
-    if thumbnails:
-        channel_info.update(thumbnail=bump_channel_thumbnail(thumbnails[0]))
+        component.update(channel=Channel(**channel_info))
 
-    component.update(channel_info=channel_info)
-
-    return component
+    return Video(**component)

@@ -1,4 +1,15 @@
+from dataclasses import dataclass
+
+from .channel import Channel
 from .utils import get_text
+
+
+@dataclass
+class Show:
+    id: str
+    title: str
+    channel: Channel = None
+    thumbnail: str = None
 
 
 def from_show_renderer(data: dict):
@@ -11,11 +22,10 @@ def from_show_renderer(data: dict):
 
     if owner_runs:
         channel = owner_runs[0]
-        channel_component = {
-            "id": channel["navigationEndpoint"]["browseEndpoint"]["browseId"],
-            "name": channel["text"],
-        }
-        component["channel"] = channel_component
+        component["channel"] = Channel(
+            channel["navigationEndpoint"]["browseEndpoint"]["browseId"],
+            channel["text"],
+        )
 
     if "naviagtionEndpoint" in data:
         component["id"] = data["navigationEndpoint"]["browseEndpoint"]["browseId"]
@@ -32,4 +42,4 @@ def from_show_renderer(data: dict):
 
         component.update(thumbnail=highest_quality["url"])
 
-    return component
+    return Show(**component)

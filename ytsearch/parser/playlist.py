@@ -1,4 +1,21 @@
-from .utils import bump_channel_thumbnail, get_maxres_video_thumbnail, get_text
+from dataclasses import dataclass
+
+from .channel import Channel
+from .utils import bump_image, get_maxres_video_thumbnail, get_text
+from .video import Video
+
+
+@dataclass
+class Playlist:
+    id: str
+    title: str
+    video_count: str = None
+    relative_upload_time: str = None
+    channel: Channel = None
+    videos: list = None
+    is_live: bool = False
+    duration: str = None
+    thumbnail: str = None
 
 
 def from_playlist_renderer(data: dict):
@@ -18,11 +35,10 @@ def from_playlist_renderer(data: dict):
 
     if owner_runs:
         channel = owner_runs[0]
-        channel_component = {
-            "id": channel["navigationEndpoint"]["browseEndpoint"]["browseId"],
-            "name": channel["text"],
-        }
-        component["channel"] = channel_component
+        component["channel"] = Channel(
+            channel["navigationEndpoint"]["browseEndpoint"]["browseId"],
+            channel["text"],
+        )
 
     def genexp():
         for video in data.get("videos"):
@@ -40,8 +56,8 @@ def from_playlist_renderer(data: dict):
             if not is_live:
                 internal_component["duration"] = get_text(video_component["lengthText"])
 
-            yield internal_component
+            yield Video(**internal_component)
 
     component["videos"] = list(genexp())
 
-    return component
+    return Playlist(**component)
