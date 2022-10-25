@@ -11,9 +11,6 @@ def autocomplete(
     home_language="en",
     video_id=None
 ):
-    """
-    YouTube's autocomplete; the content will vary from language to language and can be adjusted to a specific video using that video's id.
-    """
     query = {
         "q": incomplete_query,
         "hl": home_language,

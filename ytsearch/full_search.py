@@ -3,57 +3,82 @@ from .constants import PUBLIC_YOUTUBE_API_KEY, YOUTUBE_SEARCH_API, YOUTUBE_SEARC
 from .parser import iter_from_item_section_renderer
 
 
-def sanitise_api_response(data: dict):
+def fetch_data(data: dict, *, initial=False):
 
-    if "contents" in data:
-        medias = data["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"][
-            "sectionListRenderer"
-        ]["contents"]
+    if initial:
+        medias = (
+            data.get("contents", {})
+            .get("twoColumnSearchResultsRenderer", {})
+            .get("primaryContents", {})
+            .get("sectionListRenderer", {})
+            .get("contents", [])
+        )
     else:
-        medias = data["onResponseReceivedCommands"][0]["appendContinuationItemsAction"][
-            "continuationItems"
-        ]
+        medias = (
+            data.get("onResponseReceivedCommands", [{}])[0]
+            .get("appendContinuationItemsAction", {})
+            .get("continuationItems", [])
+        )
 
     if len(medias) > 1:
         item_selection_renderer, continuation_tracker = medias
     else:
-        item_selection_renderer, continuation_tracker = medias[0], None
+        item_selection_renderer, continuation_tracker = medias[0], {}
 
-    return (
-        int(data["estimatedResults"]),
-        item_selection_renderer["itemSectionRenderer"],
-        continuation_tracker["continuationItemRenderer"]["continuationEndpoint"][
-            "continuationCommand"
-        ]["token"]
-        if continuation_tracker is not None
-        else None,
+    estimated_results = int(data["estimatedResults"])
+    items = item_selection_renderer.get("itemSectionRenderer", [])
+    continuation_token = (
+        continuation_tracker.get("continuationItemRenderer", {})
+        .get("continuationEndpoint", {})
+        .get("continuationCommand", {})
+        .get("token", None)
     )
+    return estimated_results, items, continuation_token
 
 
-youtube_client_version = "2.20200304.02.01"
+youtube_client_version = "2.20221021.00.00"
 youtube_client_name = "1"
 
-context = {
-    "hl": "en",
-    "client": {
-        "clientName": youtube_client_name,
-        "clientVersion": youtube_client_version,
-    },
-}
+
+def youtube_pbj_request(
+    session,
+    *args,
+    params={},
+    headers={},
+    youtube_client_version=youtube_client_version,
+    youtube_client_name=youtube_client_name,
+    **kwargs,
+):
+
+    params.update({"pbj": "1"})
+    headers.update(
+        {
+            "x-youtube-client-name": youtube_client_name,
+            "x-youtube-client-version": youtube_client_version,
+        }
+    )
+
+    return session.get(
+        *args,
+        params=params,
+        headers=headers,
+        **kwargs,
+    )
 
 
 def search(
     session,
-    query,
+    query: str,
     *,
-    sort_by=filters.SortBy.RELEVANCE,
-    features=(),
-    duration=None,
-    content_type=None,
-    upload_time=None,
-    autocorrect=False,
-    keep_searching=False,
-    custom_api_context=context,
+    sort_by: "filters.SortBy | None" = filters.SortBy.RELEVANCE,
+    features: "tuple[filters.Feature]" = (),
+    duration: "filters.Duration" = None,
+    content_type: "filters.ContentType" = None,
+    upload_time: "filters.UploadTime" = None,
+    autocorrect: bool = False,
+    keep_searching: bool = False,
+    youtube_client_version=youtube_client_version,
+    youtube_client_name=youtube_client_name,
 ):
 
     filter_key = filters.get_filter_key(
@@ -68,33 +93,42 @@ def search(
     params = {
         "hl": "en",
         "search_query": query,
-        "pbj": "1",
     }
 
     if filter_key:
         params["sp"] = filter_key
 
-    youtube_response = session.get(
+    youtube_response = youtube_pbj_request(
+        session,
         YOUTUBE_SEARCH_URL,
         params=params,
-        headers={
-            "x-youtube-client-name": youtube_client_name,
-            "x-youtube-client-version": youtube_client_version,
-        },
-    ).json()[1]["response"]
+        youtube_client_name=youtube_client_name,
+        youtube_client_version=youtube_client_version,
+    )
+
+    _, returned_data = youtube_response.json()
+
     (
         estimated_results,
         item_selection_renderer,
         continuation_token,
-    ) = sanitise_api_response(youtube_response)
+    ) = fetch_data(returned_data["response"], initial=True)
 
     for component in iter_from_item_section_renderer(item_selection_renderer):
-        yield estimated_results, component
+        yield component | {"estimated_results": estimated_results}
 
     if not keep_searching:
         return
 
     component = {}
+
+    context = {
+        "hl": "en",
+        "client": {
+            "clientName": youtube_client_name,
+            "clientVersion": youtube_client_version,
+        },
+    }
 
     while component is not None and continuation_token is not None:
 
@@ -105,14 +139,14 @@ def search(
             params={
                 "key": PUBLIC_YOUTUBE_API_KEY,
             },
-            json={"context": custom_api_context, "continuation": continuation_token},
+            json={"context": context, "continuation": continuation_token},
         ).json()
 
         (
             estimated_results,
             item_selection_renderer,
             continuation_token,
-        ) = sanitise_api_response(response)
+        ) = fetch_data(response)
 
         for component in iter_from_item_section_renderer(item_selection_renderer):
-            yield estimated_results, component
+            yield estimated_results | {"estimated_results": estimated_results}
